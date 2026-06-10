@@ -11,7 +11,8 @@ import {
   Sparkles,
   Settings,
   X,
-  Info
+  Info,
+  Lightbulb
 } from 'lucide-react';
 import { StudentSelection, ConversationTone } from '../types';
 
@@ -34,15 +35,14 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
     setCharacterCount(selection.sourceText.length);
   }, [selection.sourceText]);
 
-  // When selected dynamic changes, update customSituation with defaultSituation if student hasn't heavily customized or if we just changed it
+  // When selected dynamic changes, clear customSituation to force student input
   const handleDynamicChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nextDynamicId = e.target.value;
     
     if (nextDynamicId === 'אחר') {
       // Prefill modal with a helpful customizable educational template
-      const defaultName = selection.customDynamicName || 'דינמיקת ניפוץ אמונות';
+      const defaultName = selection.customDynamicName || 'מבנה ניפוץ אמונות';
       const defaultStructure = selection.customDynamicStructure || 'דילוג פילוסופי מונחה-רפלקציה שבו מנחה קפדן שואל שאלות המאלצות את הדובר לעמוד בפני החלטתו האתית האמיתית ללא פילטרים.';
-      const defaultSit = selection.customSituation || 'שיחה קשה במסדרון בית ספר תיכון מול מנהל המוסד שנקשר לסקנדל תדמיתי.';
 
       setTempName(defaultName);
       setTempStructure(defaultStructure);
@@ -52,16 +52,15 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
         dynamicId: 'אחר',
         customDynamicName: defaultName,
         customDynamicStructure: defaultStructure,
-        customSituation: defaultSit,
+        customSituation: '',
       });
 
       setIsCustomDynamicModalOpen(true);
     } else {
-      const found = dynamicsList.find((d) => d.name === nextDynamicId);
       onChange({
         ...selection,
         dynamicId: nextDynamicId,
-        customSituation: found ? found.defaultSituation : selection.customSituation,
+        customSituation: '',
       });
     }
   };
@@ -71,8 +70,8 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
     onChange({
       ...selection,
       dynamicId: 'אחר',
-      customDynamicName: tempName.trim() || 'דינמיקה חופשית',
-      customDynamicStructure: tempStructure.trim() || 'דיאלוג סולידי קשה',
+      customDynamicName: tempName.trim() || 'מבנה חופשי',
+      customDynamicStructure: tempStructure.trim() || 'שיחת חולין',
     });
     setIsCustomDynamicModalOpen(false);
   };
@@ -90,6 +89,13 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
 
   const calculatedWordCount = selection.durationMinutes * 130;
 
+  const currentDynamic = dynamicsList.find((d) => d.name === selection.dynamicId);
+  const originalExampleText = currentDynamic 
+    ? currentDynamic.defaultSituation 
+    : 'שיחה קשה במסדרון בית ספר תיכון מול מנהל המוסד שנקשר לסקנדל תדמיתי.';
+
+  const isSituationEmpty = !selection.customSituation || selection.customSituation.trim() === '';
+
   return (
     <>
       <div id="student-workspace-layout" className="flex flex-col lg:flex-row bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
@@ -106,7 +112,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
           {/* Dynamic Selector */}
           <section className="flex flex-col gap-2">
             <label htmlFor="student-dynamic-selector" className="text-xs font-bold text-slate-600 uppercase tracking-wider block flex items-center justify-between">
-              <span>דינמיקה פדגוגית</span>
+              <span>מבנה שיחה</span>
               {selection.dynamicId === 'אחר' && (
                 <button
                   type="button"
@@ -135,7 +141,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
                   </option>
                 ))}
                 <option value="אחר" className="text-indigo-600 font-semibold bg-indigo-50/40">
-                  ✨ אחר / דינמיקה אישית שלי...
+                  ✨ אחר / פורמט שלי...
                 </option>
               </select>
             </div>
@@ -425,14 +431,46 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
           {/* Dynamic Situation Customization */}
           <div className="flex flex-col gap-2">
             <label htmlFor="student-situation-text" className="text-sm font-semibold text-slate-700 flex items-center justify-between">
-              <span>תיאור הסיטואציה הספציפית לסימולציה:</span>
-              <span className="text-[10px] text-indigo-600 font-semibold px-2 py-0.5 rounded bg-indigo-50">ניתן להתאמה אישית חופשית</span>
+              <div className="flex items-center gap-1.5">
+                <span>תיאור הסיטואציה הספציפית לסימולציה:</span>
+                <div className="relative group inline-block">
+                  <Lightbulb 
+                    size={16} 
+                    className="text-amber-500 cursor-pointer hover:text-amber-600 transition-colors shrink-0 animate-pulse"
+                  />
+                  <div className="absolute z-40 bottom-full right-0 mb-2 w-80 p-3.5 bg-slate-900 border border-slate-800 text-white rounded-xl shadow-xl text-xs leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 text-right">
+                    <div className="font-bold text-amber-400 mb-1 flex items-center gap-1 justify-end">
+                      <span>דוגמא:</span>
+                      <Lightbulb size={12} />
+                    </div>
+                    <p className="text-slate-200 font-normal mt-1">{originalExampleText}</p>
+                  
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] text-red-500 font-semibold px-2 py-0.5 rounded bg-red-50 border border-red-100 animate-pulse">שדה חובה להמשך</span>
             </label>
+
+            {/* Situation guidelines/instructions */}
+            <p className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-indigo-100/80 leading-relaxed mb-2 font-medium">
+              <span className="font-bold text-indigo-700 text-sm block mb-1.5">כיצד לכתוב תיאור סיטואציה פדגוגית?</span>
+              הקפידו לכלול את ארבעת רכיבי המפתח הבאים: 
+              <br />
+              <strong className="text-indigo-900 font-semibold"> מקום והקשר</strong> (איפה מתרחש הדיאלוג) • 
+              <strong className="text-indigo-900 font-semibold">  תיאור האירוע</strong> (מה קרה שחולל את הדיון) • 
+              <strong className="text-indigo-900 font-semibold">  דמויות משתתפות</strong> (מי בחדר ומה הזיקה שלהם) • 
+              <strong className="text-indigo-900 font-semibold">  קונפליקט וניטרליות</strong> (איזו דילמה דוחפת את הצדדים להפעיל לחץ ומי שואף להישאר ניטרלי).
+            </p>
+
             <input
               id="student-situation-text"
               type="text"
-              className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 rounded-xl px-4 py-3 text-sm outline-none transition font-medium text-slate-800"
-              placeholder="הגדירו את זירת ההתרחשות (למשל: חדר מצב PR, דיון ועדת אתיקה וכד׳)..."
+              className={`w-full bg-white border rounded-xl px-4 py-3 text-sm outline-none transition font-medium focus:ring-2 focus:ring-indigo-500/10 ${
+                isSituationEmpty
+                  ? 'border-amber-300 focus:border-amber-500 bg-amber-50/5 text-amber-900'
+                  : 'border-slate-200 focus:border-indigo-500 text-slate-800'
+              }`}
+              placeholder="רשמו כאן את מקום האירוע, המשתתפים, הקונפליקט, והדילמה של הניטרליות..."
               value={selection.customSituation}
               onChange={(e) => onChange({ ...selection, customSituation: e.target.value })}
             />
@@ -442,19 +480,29 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
           <div className="pt-4 border-t border-slate-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             <div className="text-xs text-slate-400 flex items-center gap-1.5 leading-relaxed">
               <HelpCircle size={14} className="text-slate-400 shrink-0 font-light" />
-              <span>המערכת תשלב קריטריונים, חישוב מילים, דינמיקה נבחרת, בחירת טון ומשתתפים.</span>
+              <span>המערכת תשלב קריטריונים, חישוב מילים, מבנה נבחר, בחירת טון ומשתתפים.</span>
             </div>
 
             {/* Button for Prompt Gen */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              {isSituationEmpty && (
+                <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg text-center font-medium">
+                  יש למלא את תיאור הסיטואציה כדי להמשיך
+                </span>
+              )}
               {/* Gemini Main Button */}
               <button
                 id="btn-generate-prompt"
                 type="button"
                 onClick={onSubmit}
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold rounded-xl shadow-xs transition hover:scale-[1.01] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
+                disabled={isSituationEmpty}
+                className={`px-6 py-3 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 ${
+                  isSituationEmpty
+                    ? 'bg-slate-300 border border-slate-200 text-slate-400 cursor-not-allowed opacity-75'
+                    : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 hover:scale-[1.01] active:scale-98 cursor-pointer'
+                }`}
               >
-                <Cpu size={14} className="animate-pulse" />
+                <Cpu size={14} className={isSituationEmpty ? "" : "animate-pulse"} />
                 צור הנחיה (Prompt) ל-Gemini
               </button>
             </div>
@@ -478,7 +526,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
             <div className="px-6 py-4 bg-slate-950 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles size={18} className="text-indigo-400" />
-                <h3 className="font-bold text-sm">הגדירו דינמיקה פדגוגית בהתאמה אישית</h3>
+                <h3 className="font-bold text-sm">הגדירו פורמט שיחה בהתאמה אישית</h3>
               </div>
               <button 
                 type="button"
@@ -497,7 +545,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
                 <div>
                   <p className="font-bold mb-0.5">דוגמה והנחיה (איך למלא?)</p>
                   <p className="leading-relaxed opacity-90">
-                    רשום כותרת קצרה וממוקדת, ותאר במפורט את כללי הדינמיקה האקדמית (מי מפעיל לחץ, מה היחסים ומה חוקי הוויכוח) כדי שהמודל יבין כיצד לחמם את התסריט.
+                    רשום כותרת קצרה וממוקדת, ותאר במפורט את כללי הפורמט האקדמי (מי מפעיל לחץ, מה היחסים ומה חוקי הוויכוח) כדי שהמודל יבין כיצד לחמם את התסריט.
                   </p>
                 </div>
               </div>
@@ -521,7 +569,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
               {/* Dynamic Structure Textarea */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="modal-dynamic-structure" className="text-xs font-bold text-slate-700">
-                  תיאור מבנה הדינמיקה וכללי העימות:
+                  תיאור מבנה השיחה וכללי העימות:
                 </label>
                 <textarea
                   id="modal-dynamic-structure"

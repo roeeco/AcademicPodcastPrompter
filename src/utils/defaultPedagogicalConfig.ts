@@ -17,7 +17,7 @@ export const DEFAULT_TEACHER_CONFIG: TeacherConfig = {
 export const DEFAULT_STUDENT_SELECTION: StudentSelection = {
   sourceText: '',
   dynamicId: 'פרלמנט שכונתי',
-  customSituation: 'פרלמנט שכונתי קולני ליד קיוסק מקומי שבו בעל העסק מנסה להישאר ניטרלי כדי לא להפסיד קליינטים ומגלה שהשתיקה עולה לו ביוקר',
+  customSituation: '',
   participantsCount: 2,
   durationMinutes: 2,
   outputLanguage: 'עברית',

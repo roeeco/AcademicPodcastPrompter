@@ -13,12 +13,12 @@ import { DEFAULT_TEACHER_CONFIG, DEFAULT_STUDENT_SELECTION } from './utils/defau
 export default function App() {
   // Persistence via localStorage initializer
   const [teacherConfig, setTeacherConfig] = useState<TeacherConfig>(() => {
-    const saved = localStorage.getItem('neutrality_teacher_config_v2');
+    const saved = localStorage.getItem('neutrality_teacher_config_v3');
     return saved ? JSON.parse(saved) : DEFAULT_TEACHER_CONFIG;
   });
 
   const [studentSelection, setStudentSelection] = useState<StudentSelection>(() => {
-    const saved = localStorage.getItem('neutrality_student_selection_v2');
+    const saved = localStorage.getItem('neutrality_student_selection_v3');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -46,11 +46,11 @@ export default function App() {
 
   // Write changes to localStorage on any state mutation
   useEffect(() => {
-    localStorage.setItem('neutrality_teacher_config_v2', JSON.stringify(teacherConfig));
+    localStorage.setItem('neutrality_teacher_config_v3', JSON.stringify(teacherConfig));
   }, [teacherConfig]);
 
   useEffect(() => {
-    localStorage.setItem('neutrality_student_selection_v2', JSON.stringify(studentSelection));
+    localStorage.setItem('neutrality_student_selection_v3', JSON.stringify(studentSelection));
   }, [studentSelection]);
 
   // Parse dynamics whenever teacher configuration texts change
@@ -64,7 +64,7 @@ export default function App() {
         setStudentSelection((prev) => ({
           ...prev,
           dynamicId: dynamicsList[0].name,
-          customSituation: dynamicsList[0].defaultSituation,
+          customSituation: '',
         }));
       }
     }
@@ -79,7 +79,7 @@ export default function App() {
         ...prev,
         ...DEFAULT_STUDENT_SELECTION,
         dynamicId: defaults[0].name,
-        customSituation: defaults[0].defaultSituation,
+        customSituation: '',
       }));
       setCompiledPrompt('');
     }
