@@ -100,7 +100,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
         >
           <div>
             <h3 className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">פרמטרים לפעילות</h3>
-            <p className="text-[11px] text-slate-400 leading-relaxed">הגדר את דינמיקת הלמידה ואת המאפיינים שיורכבו לפרומפט אקדמי</p>
+            <p className="text-[11px] text-slate-400 leading-relaxed">הגדירו את דינמיקת הלמידה ואת המאפיינים שיורכבו לפרומפט אקדמי</p>
           </div>
 
           {/* Dynamic Selector */}
@@ -393,7 +393,6 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit 
                 <BookOpen size={18} className="text-indigo-600" />
                 מרחב עריכה וניתוח טקסטואלי
               </h2>
-              <p className="text-xs text-slate-400">הזינו את חומרי הגלם ועצבו את סימולציית המודל בהתאם להנחיות הפדגוגיות</p>
             </div>
 
             <button

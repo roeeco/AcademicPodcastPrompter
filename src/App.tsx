@@ -281,7 +281,7 @@ export default function App() {
       {/* Clean Minimalist Page Footer */}
       <footer className="text-center mt-12 text-xs text-slate-400 max-w-lg mx-auto px-6 space-y-1">
         <p>מיועד לסטודנטים ולסגל פדגוגי העוסקים בדילמת הניטרליות בהוראה.</p>
-        <p className="font-medium">החוג לחינוך אקדמי • פלטפורמת סימולציה מורכבת</p>
+        <p className="font-medium">Built with Google AI  Studio</p>
       </footer>
     </div>
   );
