@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sliders, HelpCircle, RotateCcw, ShieldCheck, ListPlus } from 'lucide-react';
+import { Sliders, HelpCircle, RotateCcw, ShieldCheck, ListPlus, Sparkles } from 'lucide-react';
 import { TeacherConfig } from '../types';
 
 interface AdminPanelProps {
@@ -93,6 +93,7 @@ export default function AdminPanel({ config, onChange, onReset }: AdminPanelProp
           </div>
         </div>
       </div>
+
     </div>
   );
 }

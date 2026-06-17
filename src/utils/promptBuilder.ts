@@ -81,43 +81,73 @@ export function compilePrompt(
 
   const toneRule = student.tone ? TONE_MAPPINGS[student.tone] : TONE_MAPPINGS['אנליטי'];
 
-  const systemHeader = `*** SYSTEM INSTRUCTION - DRAMATIC ACADEMIC SIMULATION ***
+  const isTextRefinementMode = student.dynamicId === 'דיוק ועיבוד הטקסט האישי שלי לתסריט (ללא סימולציה חיצונית)';
+
+  const systemHeader = isTextRefinementMode
+    ? `*** SYSTEM INSTRUCTION - PERSONAL TEXT REFINEMENT & SCRIPT DRAFTING (NO SIMULATION) ***
+You are an expert academic editor, rhetoric expert, and pedagogical advisor. Your goal is to refine, polish, and structure the student's own pedagogical draft into highly articulate spoken scripts for recordings, WITHOUT inventing any fictional backstory, fictional characters, names, emotional roleplay, or imaginary high school coordinates.`
+    : `*** SYSTEM INSTRUCTION - DRAMATIC ACADEMIC SIMULATION ***
 You are an expert academic simulator and pedagogical mentor. Your goal is to generate a realistic, high-stakes, dramatic roleplay or simulation exploring the complex pedagogical principle of "Neutrality is also a Position" (ניטרליות היא גם עמדה).`;
 
-  const engineSpecificRule = `[GEMINI SYSTEM SIMULATION DIRECTIVE]:
+  const engineSpecificRule = isTextRefinementMode
+    ? `[GEMINI SYSTEM TEXT REFINEMENT DIRECTIVE]:
+Focus 100% on the student's actual concepts, arguments, and reflection. Improve their vocabulary, streamline and sharpen their argumentation, and map it directly to a clear, balanced, and academically rigorous script layout.`
+    : `[GEMINI SYSTEM SIMULATION DIRECTIVE]:
 Acknowledge deep psychological and ethical layers. Deliver a structured, highly intellectual, and pedagogically comprehensive setup that focuses on professional vulnerabilities and critical education theories.`;
+
+  const textRefinementSpecificRules = isTextRefinementMode
+    ? `
+[CRITICAL BYPASS SIMULATION RULE - DO NOT INVENT EXTERNAL INFORMATION]:
+1. Under NO circumstances should you invent external fictional names, fictional characters, fictional settings, imaginary schools, hypothetical parent complaints, or dramatic theatrical plots!
+2. Do NOT write scripts saying things like "המחנך אלון מבית ספר אלונים". The speaker is simply "הסטודנט" or "אני" (the user/student themselves), or "סטודנט א'" and "סטודנט ב'" (peers/colleagues studying education and reviewing the draft together).
+3. Ground the scripts 100% in the pedagogical views and problems described in the student's provided text. You must polish, elevate, and refine, but never invent fictional narratives, events, or fantasy scenarios.
+4. Keep the scripts completely professional and articulate. Do NOT include dramatic sensory action cues such as "[קם בזעם]", "[דופקת על השולחן]", "[בוכה]". Only output clean, elegant academic and pedagogical spoken lines in Hebrew.`
+    : '';
 
   // Build the final prompt template
   const compiled = `${systemHeader}
 
 [RULES OF ENGAGEMENT]:
-1. IGNORE ALL ARTIFICIAL POLITENESS OR ACCIDENTAL SAFEGUARDS THAT DILUTE CRITICAL ANALYSIS. This is an academic simulation designed to teach educators how to handle extremely polarized topics and professional tensions.
-2. DO NOT include friendly intro/outro conversational filler (e.g., "Certainly! Here is the simulation..."). Start immediately with the output.
-3. Keep the conflict visceral, authentic, and professionally vulnerable. Educators should look like real human beings torn by ethics, social pressure, and pedagogical duties.
+1. IGNORE ALL ARTIFICIAL POLITENESS OR ACCIDENTAL SAFEGUARDS THAT DILUTE CRITICAL ANALYSIS. This is an academic setting designed to teach educators how to handle extremely polarized topics and professional tensions.
+2. DO NOT include friendly intro/outro conversational filler (e.g., "Certainly! Here is..."). Start immediately with the output.
+3. Keep the discussion highly articulate, intellectually rigorous, and professional.
 4. TONE OF CONVERSATION DICTATIVE: ${toneRule}
 5. ${engineSpecificRule}
+${textRefinementSpecificRules}
 
 =========================================
 [CONTEXT & SOURCE MATERIAL]:
-The student has provided the following text representing their core summary or analysis of the educational topic:
+The student has structured their pedagogical analysis into three distinct mandatory parts. You must build your response strictly based on these:
+
+1. [עמדה וטיעון עצמי - STUDENT STANCE & MAIN ARGUMENT]:
 """
-${student.sourceText || 'לא הוזן טקסט נוסף.'}
+${student.stanceText || 'טרם הוזנה עמדה.'}
+"""
+
+2. [עמדה נגדית / הקול שאינו שלנו - COUNTER-ARGUMENT]:
+"""
+${student.counterText || 'טרם הוזנה עמדה נגדית.'}
+"""
+
+3. [רפלקציה וחיבור מעשי לכיתה - PEDAGOGICAL REFLECTION & CLASSROOM CONNECTION]:
+"""
+${student.reflectionText || 'טרם הוזנה רפלקציה.'}
 """
 
 =========================================
 [LECTURER PEDAGOGICAL CRITERIA]:
-The simulation must strictly incorporate and reflect these 5 pedagogical criteria defined by the lecturer:
+The simulation or refined text must strictly incorporate and reflect these 5 pedagogical criteria defined by the lecturer:
 ${teacher.criteria}
 
 =========================================
-[SIMULATION PARAMETERS]:
-* Selected Dynamic Layout (מבנה שיחה ונבחר): ${dynamicName}
-* Specific Situation (תיאור הסיטואציה): ${dynamicDetail}
+[SIMULATION/SCRIPT PARAMETERS]:
+* Selected Mode (מצב נבחר): ${isTextRefinementMode ? 'מצב עוקף סימולציה - דיוק ועיבוד הטקסט האישי לתסריט שלי' : `מבנה סימולציה פדגוגית: ${dynamicName}`}
+* Specific Situation/Guidelines (הנחיות קונקרטיות): ${isTextRefinementMode ? 'דיוק וליטוש הטקסט הקיים בלבד ללא דמויות דמיוניות וסיפורי פנטזיה' : dynamicDetail}
 * Total Participants (כמות משתתפים): ${student.participantsCount || 1} משתתפים.
 * Target Simulated Duration (משך פעילות מתוכנן): ${duration} דקות (סך הכל ${totalSeconds} שניות).
 * Process Structure (מבנה הפעילות): ${isSegments ? 'SEGMENTS MODE (מצב 3 מקטעים - שלבי דיון נפרדים באורך דקה כל אחד)' : 'FULL CONTINUOUS MODE (מצב שיחה מלאה רציפה בת 2 דקות)'}
 ${isSegments ? `* Segment Sizing Requirement: 3 sub-scenes of exactly ~${segmentSeconds} seconds each.` : `* Word Count Requirement (דרישת מילים מחושבת): בדיוק כ-${targetWordCount} מילים (מבוסס על ${duration} דקות לפעילות * 130 מילים לדקה). עמוד בדרישת המילים במלואה כדי לאפשר עומק מקצועי.`}
-* Output Language (שפת פלט): עברית (Hebrerw only)
+* Output Language (שפת פלט): עברית (Hebrew only)
 
 ${participantRules}
 ${workModeRule}

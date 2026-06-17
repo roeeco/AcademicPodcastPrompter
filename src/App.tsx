@@ -37,9 +37,38 @@ export default function App() {
   const [compiledPrompt, setCompiledPrompt] = useState<string>('');
   const promptOutputRef = useRef<HTMLDivElement>(null);
 
-  // Write changes to localStorage on any state mutation
+  // Load teacher layout configuration from server on mount
+  useEffect(() => {
+    fetch('/api/teacher-config')
+      .then((res) => {
+        if (res.ok) return res.json();
+        throw new Error('Failed to load configuration from server');
+      })
+      .then((data) => {
+        setTeacherConfig((prev) => ({
+          ...prev,
+          ...data,
+        }));
+      })
+      .catch((err) => {
+        console.warn('Could not load teacher configuration from database/server, falling back to local storage:', err);
+      });
+  }, []);
+
+  // Write changes to localStorage & sync with Express server database on any configuration update
   useEffect(() => {
     localStorage.setItem('neutrality_teacher_config_v5', JSON.stringify(teacherConfig));
+    
+    // Server-side persistent storage synchronization
+    fetch('/api/teacher-config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(teacherConfig),
+    }).catch((err) => {
+      console.error('Failed to run server-side persistent config save:', err);
+    });
   }, [teacherConfig]);
 
   useEffect(() => {
@@ -151,6 +180,7 @@ export default function App() {
             dynamicsList={dynamicsList}
             onChange={setStudentSelection}
             onSubmit={handleGenerate}
+            enableTextAnalyzer={teacherConfig.enableTextAnalyzer}
           />
         </section>
 

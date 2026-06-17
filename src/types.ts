@@ -6,12 +6,15 @@ export interface EducationalDynamic {
 export interface TeacherConfig {
   criteria: string;
   dynamicsText: string; // The raw line-separated text editable by the mentor
+  enableTextAnalyzer?: boolean; // Toggle for student draft evaluation
 }
 
 export type ConversationTone = 'ידידותי' | 'עצבני' | 'רשמי' | 'אנליטי' | 'גס';
 
 export interface StudentSelection {
-  sourceText: string;
+  stanceText: string;
+  counterText: string;
+  reflectionText: string;
   dynamicId?: string; // empty or undefined initially
   customSituation: string;
   participantsCount?: 1 | 2 | 3; // unselected initially (1 = Monologue, 2, 3)
