@@ -12,15 +12,15 @@ export type ConversationTone = 'ידידותי' | 'עצבני' | 'רשמי' | '�
 
 export interface StudentSelection {
   sourceText: string;
-  dynamicId: string; // Index or Name of selected dynamic, which can be "אחר"
+  dynamicId?: string; // empty or undefined initially
   customSituation: string;
-  participantsCount: 2 | 3;
-  durationMinutes: number;
-  outputLanguage: 'עברית' | 'אנגלית' | 'ערבית';
-  outputFormat: 'script' | 'flashcards';
-  structureType?: 'full' | 'segments';
-  tone: ConversationTone;
+  participantsCount?: 1 | 2 | 3; // unselected initially (1 = Monologue, 2, 3)
+  durationMinutes?: number; // unselected initially, maps to structure duration
+  outputLanguage: 'עברית'; // Hebrew only per guidelines
+  structureType?: 'full' | 'segments'; // unselected initially
+  tone?: ConversationTone; // unselected initially
   customDynamicName?: string;
-  customDynamicStructure?: string;
+  workMode?: 'individual' | 'together'; // unselected initially (עובדים בנפרד / ביחד)
 }
+
 

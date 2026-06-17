@@ -16,14 +16,14 @@ export const DEFAULT_TEACHER_CONFIG: TeacherConfig = {
 
 export const DEFAULT_STUDENT_SELECTION: StudentSelection = {
   sourceText: '',
-  dynamicId: 'פרלמנט שכונתי',
+  dynamicId: undefined,
   customSituation: '',
-  participantsCount: 2,
-  durationMinutes: 2,
+  participantsCount: undefined,
+  durationMinutes: undefined,
   outputLanguage: 'עברית',
-  outputFormat: 'script',
-  structureType: 'full',
-  tone: 'גס',
-  customDynamicName: 'דינמיקת ניפוץ אמונות',
-  customDynamicStructure: 'דילוג פילוסופי מונחה-רפלקציה שבו מנחה קפדן שואל שאלות המאלצות את הדובר לעמוד בפני החלטתו האתית האמיתית ללא פילטרים.',
+  structureType: undefined,
+  tone: undefined,
+  customDynamicName: '',
+  workMode: undefined,
 };
+

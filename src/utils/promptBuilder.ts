@@ -29,42 +29,57 @@ export function compilePrompt(
   student: StudentSelection,
   teacher: TeacherConfig
 ): string {
-  const targetWordCount = student.durationMinutes * 130;
+  const duration = student.durationMinutes || 2;
+  const targetWordCount = duration * 130;
   
-  // Custom or pre-defined dynamic handling
-  let dynamicName = student.dynamicId;
-  let dynamicDetail = student.customSituation;
+  // Custom or pre-defined structure/dynamic handling
+  let dynamicName = student.dynamicId || 'לא נבחר';
+  let dynamicDetail = student.customSituation || '';
   
   if (student.dynamicId === 'אחר' && student.customDynamicName) {
     dynamicName = student.customDynamicName;
-    if (student.customDynamicStructure) {
-      dynamicDetail = `${student.customSituation} (מבוסס על מבנה דינמיקה שהוזן: ${student.customDynamicStructure})`;
-    }
-  } else {
-    const dynamicsList = parseDynamics(teacher.dynamicsText);
-    const found = dynamicsList.find((d) => d.name === student.dynamicId);
-    if (found) {
-      dynamicName = found.name;
-    }
   }
 
-  // Build the reflection rule based on the number of participants
-  let reflectionRule = '';
-  if (student.participantsCount === 2) {
-    reflectionRule = `
-[קריטי - חוק רפלקציה לשני משתתפים]:
-על הסימולציה להסתיים בכך שאחת משתי הדמויות מובילה ומבצעת באופן אקטיבי את המסקנה הפדגוגית והרפלקטיבית (קריטריון 5 של המרצה - מהעיקרון אל הכיתה) כסיכום מעשי של הדיון.`;
-  } else {
-    reflectionRule = `
-[קריטי - חוק רפלקציה לשלושה משתתפים]:
-על הסימולציה לכלול 3 דמויות. הדמות השלישית (משתתף ג') תשמש כמנטור/ית פדגוגי/ת מקצועי/ת. תפקידו/ה של דמות זו הוא לא להשתתף בויכוח הישיר, אלא להתערב בסוף הדיון, להוביל את הרפלקציה המשותפת, ולחלץ את המסקנות החינוכיות הפדגוגיות (קריטריון 5 של המרצה - מן העיקרון אל הכיתה) מתוך דברי המשתתפים האחרים.`;
+  // Build the reflection and monologue guidelines
+  let participantRules = '';
+  if (student.participantsCount === 1) {
+    participantRules = `
+[הנחיית מונולוג - משתתף אחד]:
+הסימולציה תבוצע בצורת מונולוג אישי או דיאלוג פנימי מעמיק של דמות אחת (חדר מורים, שיחה עצמית, הגות, פודקאסט מונולוגי).
+על הדמות להציג את לב הדילמה סביב הניטרליות, הלחץ שהופעל עליה והקולות השונים, ולאחר מכן לחלץ את המסקנה הפדגוגית הרפלקטיבית (קריטריון 5 - מן העיקרון אל הכיתה) ככוח מניע.';
+`;
+  } else if (student.participantsCount === 2) {
+    participantRules = `
+[חוק רפלקציה לשני משתתפים]:
+על הסימולציה הדו-שיחית להסתיים בכך שאחת משתי הדמויות מובילה ומבצעת באופן אקטיבי את המסקנה הפדגוגית והרפלקטיבית (קריטריון 5 של המרצה - מהעיקרון אל הכיתה) כסיכום מעשי של הדיון.
+`;
+  } else if (student.participantsCount === 3) {
+    participantRules = `
+[חוק רפלקציה לשלושה משתתפים]:
+על הסימולציה לכלול 3 דמויות. הדמות השלישית (משתתף ג') תשמש כמנטור/ית פדגוגי/ת מקצועי/ת. תפקידו/ה של דמות זו הוא לא להשתתף בויכוח הישיר, אלא להתערב בסוף הדיון, להוביל את הרפלקציה המשותפת, ולחלץ את המסקנות החינוכיות הפדגוגיות (קריטריון 5 של המרצה - מן העיקרון אל הכיתה) מתוך דברי המשתתפים האחרים.
+`;
+  }
+
+  // Work Mode instructions
+  let workModeRule = '';
+  if (student.workMode === 'individual') {
+    workModeRule = `
+[תצורת עבודה - עובדים בנפרד/לבד]:
+כל דמות בסיטואציה מציגה את העמדה שלה בסרטון משלה.
+המערכת צריכה להציג את התסריט בצורה המדגישה פריסת עמדות עצמאיות: הצגת עמדת הדמות באופן נפרד לחלוטין (עמדה עצמה, עמדה נגדית פוטנציאלית, ורפלקציה פדגוגית של המחנך) המיועד לצילום אישי ובנפרד על ידי כל סטודנט.
+`;
+  } else if (student.workMode === 'together') {
+    workModeRule = `
+[תצורת עבודה - עובדים ביחד]:
+סימולציה מלאה ומאוחדת של זירת ההתרחשות שבה המשתתפים שותפים מלאים ובאים במגע ישיר (הצגת העמדות השונות, עימות אינטלקטואלי ורעיוני נוקב, ורפלקציה משותפת המחברת תיאוריה ומעשה בסוף הדיאלוג).
+`;
   }
 
   const isSegments = student.structureType === 'segments';
-  const totalSeconds = student.durationMinutes * 60;
+  const totalSeconds = duration * 60;
   const segmentSeconds = Math.round(totalSeconds / 3);
 
-  const toneRule = TONE_MAPPINGS[student.tone] || TONE_MAPPINGS['אנליטי'];
+  const toneRule = student.tone ? TONE_MAPPINGS[student.tone] : TONE_MAPPINGS['אנליטי'];
 
   const systemHeader = `*** SYSTEM INSTRUCTION - DRAMATIC ACADEMIC SIMULATION ***
 You are an expert academic simulator and pedagogical mentor. Your goal is to generate a realistic, high-stakes, dramatic roleplay or simulation exploring the complex pedagogical principle of "Neutrality is also a Position" (ניטרליות היא גם עמדה).`;
@@ -96,70 +111,62 @@ ${teacher.criteria}
 
 =========================================
 [SIMULATION PARAMETERS]:
-* Selected Dynamic (דינמיקה פדגוגית): ${dynamicName}
+* Selected Dynamic Layout (מבנה שיחה ונבחר): ${dynamicName}
 * Specific Situation (תיאור הסיטואציה): ${dynamicDetail}
-* Total Participants (כמות משתתפים): ${student.participantsCount} משתתפים.
-* Selected Process Structure (מבנה הפעילות): ${isSegments ? 'SEGMENTS MODE (מצב מקטעים - שלוש סצנות אופטימליות עוקבות)' : 'FULL CONTINUOUS MODE (מצב שיחה מלאה רציפה)'}
-* Target Simulated Duration (משך פעילות מתוכנן): ${student.durationMinutes} דקות (סך הכל ${totalSeconds} שניות).
-${isSegments ? `* Segment Sizing Requirement: 3 sub-scenes of exactly ~${segmentSeconds} seconds each.` : `* Word Count Requirement (דרישת מילים מחושבת): בדיוק כ-${targetWordCount} מילים (מבוסס על ${student.durationMinutes} דקות לפעילות * 130 מילים לדקה). עמוד בדרישת המילים במלואה כדי לאפשר עומק מקצועי.`}
-* Output Language (שפת פלט): ${student.outputLanguage}
-* Output Format Requested (סוג פלט מבוקש): ${
-    student.outputFormat === 'script'
-      ? 'FULL SPOKEN DIALOGUE / SCRIPT (תסריט מלא)'
-      : 'PEDAGOGICAL FLASHCARDS (כרטיסיות סיכום וניווט)'
-  }
+* Total Participants (כמות משתתפים): ${student.participantsCount || 1} משתתפים.
+* Target Simulated Duration (משך פעילות מתוכנן): ${duration} דקות (סך הכל ${totalSeconds} שניות).
+* Process Structure (מבנה הפעילות): ${isSegments ? 'SEGMENTS MODE (מצב 3 מקטעים - שלבי דיון נפרדים באורך דקה כל אחד)' : 'FULL CONTINUOUS MODE (מצב שיחה מלאה רציפה בת 2 דקות)'}
+${isSegments ? `* Segment Sizing Requirement: 3 sub-scenes of exactly ~${segmentSeconds} seconds each.` : `* Word Count Requirement (דרישת מילים מחושבת): בדיוק כ-${targetWordCount} מילים (מבוסס על ${duration} דקות לפעילות * 130 מילים לדקה). עמוד בדרישת המילים במלואה כדי לאפשר עומק מקצועי.`}
+* Output Language (שפת פלט): עברית (Hebrerw only)
 
-${reflectionRule}
+${participantRules}
+${workModeRule}
 
 =========================================
 [REQUIRED OUTPUT FORMAT DIRECTIVE]:
-${
-  student.outputFormat === 'script'
-    ? (isSegments
-      ? `Since a SEGMENTED SCRIPT was requested, generate 3 consecutive, highly distinct spoken sub-scripts in ${student.outputLanguage}.
-Each script must be clearly labeled and designed to take around ${segmentSeconds} seconds of spoken dialogue (totalling the requested duration).
-Format the output as follows:
-- Title of the Scene (indicating the dynamic: ${dynamicName})
-- Character Briefs: Brief descriptions of ${student.participantsCount} characters with distinct educational views.
-- **מקטע 1: הצגת הדעות** (Phase 1: Presentation of views) - around ${segmentSeconds} seconds. Line-by-line dialogue where characters lay out their basic philosophies.
-- **מקטע 2: העימות** (Phase 2: Confrontation) - around ${segmentSeconds} seconds. Line-by-line dialogue showing intense academic/ethical clash and counter-arguments.
-- **מקטע 3: הרפלקציה** (Phase 3: Reflection) - around ${segmentSeconds} seconds. Line-by-line dialogue where the characters (or Mentor if 3 participants are used) connect theory to practice, and outline what this means for educators (satisfying Criterion 5).`
-      : `Since a FULL VIDEO SCRIPT was requested, output a complete turn-by-turn spoken dialogue in ${student.outputLanguage}.
-Format the output as follows:
-- Title of the Scene (indicating the dynamic: ${dynamicName})
-- Character Briefs: Brief descriptions of ${student.participantsCount} characters with distinct, sharp educational philosophies.
-- Scene Dialogue: Line-by-line dialogue. Ensure the intellectual tension builds naturally.
-- The concluding section must strictly satisfy the 5th criterion (Reflection) according to the participant count instructions above.`
-    )
-    : (isSegments
-      ? `Since SEGMENTED PEDAGOGICAL FLASHCARDS were requested, please generate exactly 3 navigation flashcards for each character (one for each phase: Phase 1: Presentation of views, Phase 2: Confrontation, and Phase 3: Reflection). This makes exactly ${student.participantsCount * 3} cards in total (${student.participantsCount} participants * 3 phases).
-To prevent textual and structural overload ("עומס טקסטואלי ומבני"), please make them highly digestible, light, and bulleted, leaning on our pedagogical anchors only in spirit.
+${(() => {
+  const isIndividual = student.workMode === 'individual' || student.participantsCount === 1;
+  if (isIndividual) {
+    if (isSegments) {
+      return `Since the selected work mode is 'עובדים לבד או בנפרד' (Individual recording / Monologue), you MUST structure the simulation as 3 separate videos (סרטונים נפרדים) designed for a single student to record individually, rather than a collaborative scenic chat or a classic group debate format.
+Structure the output exactly as follows in Hebrew:
+- Title of the Scene (indicating the structure: ${dynamicName})
+- Character Briefs: Brief descriptions of characters with distinct educational views.
+- **סרטון ראשון: עמדה** (Video 1: Position) - designed to take around ${segmentSeconds} seconds of spoken lines. A distinct personal statement presenting the character's direct educational/philosophical stance on the issue.
+- **סרטון שני: עמדה נגדית** (Video 2: Counterposition) - designed to take around ${segmentSeconds} seconds of spoken lines. A spoken presentation confronting their own stance, addressing critiques, opposing values, or hypothetical counterarguments in a self-reflective or argumentative manner.
+- **סרטון שלישי: רפלקציה** (Video 3: Reflection) - designed to take around ${segmentSeconds} seconds of spoken lines. A deep pedagogical reflection connecting theory and ethical principles to practice, satisfying active criteria and explicitly explaining what this means to them as an educator and how they apply it in the classroom (satisfying Criterion 5 - מן העיקרון אל הכיתה).`;
+    } else {
+      return `Since the selected work mode is 'עובדים לבד או בנפרד' (Individual recording / Monologue), you MUST structure the output as 3 consecutive scripts/sections for separate videos (סרטונים נפרדים) designed for a single student to record representatively.
+Structure the output exactly as follows in Hebrew:
+- Title of the Scene (indicating the structure: ${dynamicName})
+- Character Briefs: Brief descriptions of the characters and their sharp educational philosophies.
+- **סרטון ראשון: עמדה** (Video 1: Stance) - A coherent spoken monologue script where the character presents their personal position / educational stance on neutrality.
+- **סרטון שני: עמדה נגדית** (Video 2: Counterposition) - A coherent spoken monologue script presenting opposing values, potential external critiques, and counterarguments.
+- **סרטון שלישי: רפלקציה** (Video 3: Reflection) - A coherent spoken pedagogical reflection connecting theory/principles to practice, showing what this means for educators in front of their class (satisfying Criterion 5 - מן העיקרון אל הכיתה).`;
+    }
+  } else {
+    // Collaborative mode (together) with 2 or 3 participants
+    if (isSegments) {
+      return `Since a SEGMENTED SCRIPT was requested with collaborative work ('עובדים ביחד'), generate 3 consecutive, highly distinct spoken sub-scripts representing standard collaborative scenes.
+Each sub-script must be clearly labeled and designed to take around ${segmentSeconds} seconds of spoken dialogue.
+Format the output as follows in Hebrew:
+- Title of the Scene (indicating the structure: ${dynamicName})
+- Character Briefs: Brief descriptions of characters with distinct educational views.
+- **מקטע 1: הצגת הדעות** (Phase 1: Presentation of views) - around ${segmentSeconds} seconds of line-by-line dialogue/spoken lines laying out basic philosophies.
+- **מקטע 2: העימות** (Phase 2: Confrontation) - around ${segmentSeconds} seconds of line-by-line dialogue/spoken lines showing intense clashing and counterarguments.
+- **מקטע 3: הרפלקציה** (Phase 3: Reflection) - around ${segmentSeconds} seconds of line-by-line spoken dialogue connecting theory to practice, satisfying Criterion 5 (מן העיקרון אל הכיתה).`;
+    } else {
+      return `Since a FULL CONTINUOUS SCRIPT with collaborative work ('עובדים ביחד') was requested, output a complete turn-by-turn spoken dialogue.
+Format the output as follows in Hebrew:
+- Title of the Scene (indicating the structure: ${dynamicName})
+- Character Briefs: Brief descriptions of the characters and their sharp educational philosophies.
+- Speech dialogue lines: Line-by-line turn-based dialogue among characters. Ensure the intellectual tension builds naturally.
+- The concluding section must strictly satisfy the 5th criterion (Reflection: what this means for educators - מן העיקרון אל הכיתה) led by one of the characters (or the Mentor role).`;
+    }
+  }
+})()}
 
-Organize the output by Character, then list their 3 cards in ${student.outputLanguage}:
-**דמות: [שם הדמות]**
-- **כרטיסיית ניווט 1: הצגת הדעות (שלב א')**:
-  * הגדרת העמדה החינוכית של הדמות בפתח השיחה.
-  * נקודות לשיח ראשוני (מפתחות, שאלות פותחות פשוטות, משפט פתיחה).
-- **כרטיסיית ניווט 2: עימות הדעות (שלב ב')**:
-  * כיצד הדמות מתמודדת עם הטיעון הנגדי השגרתי.
-  * נקודות לשיח פעיל ומחוספס (שאלות מקניטות לשותף, משפט מעבר להעברת הדיון).
-- **כרטיסיית ניווט 3: סיכום ורפלקציה (שלב ג')**:
-  * נקודות לשיח רפלקטיבי בסיום (רזולוציה לקשר מן העיקרון אל הכיתה).
-  * שאלות סיכום רפלקטיביות שהדמות שואלת את עצמה או שותפיה.`
-      : `Since PEDAGOGICAL FLASHCARDS were requested (designed as a podcast recording navigation guide/safety net to prevent rigid script-dependency), generate ${
-          student.participantsCount === 3 ? '3' : '2'
-        } concise navigation cards in ${student.outputLanguage}.
-Each card corresponds to one of the characters in this roleplay/podcast context.
-To prevent textual and structural overload ("עומס טקסטואלי ומבני"), please make them highly digestible, light, and bulleted, leaning on our pedagogical anchors only in spirit.
-
-Each card MUST be structured exactly as follows:
-1. **הגדרת תפקיד / עמדה**: הגישה, הדמות או השקפת העולם החינוכית שהסטודנט מייצג בדיון ביחס לניטרליות.
-2. **נקודות לשיח (ברוח עוגני הדיון ומושגי החובה)**: נקודות המפתח ורעיונות קצרים לשיחה, שאלות פתוחות לשותפים לשיחה, ומשפטי מעבר זורמים - משולבים בצורה קלילה שמשאירה מקום לספונטניות וזרימה אותנטית ללא עומס.
-3. **נקודות לשיח רפלקטיבי בסיום**: רמזים לקישור תיאוריה לאקטואליה וחוויות חיים, בתוספת נקודות רפלקטיביות ספציפיות שהדמות הזו יכולה לציין כדי לסכם את הדיון ברמת הכיתה והפרקטיקה ("מה זה אומר לנו כמחנכים — מן העיקרון אל הכיתה").`
-    )
-}
-
-Please generate the complete simulation now in ${student.outputLanguage}. Ensure maximum academic precision, emotional resonance, and deep engagement with the concept "Neutrality is also a Position". Start the response directly with the content.`;
+Please generate the complete simulation now in Hebrew only (עברית בלבד). Ensure maximum academic precision, emotional resonance, and deep engagement with the concept "Neutrality is also a Position". Start the response directly with the content.`;
 
   return compiled.trim();
 }

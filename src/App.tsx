@@ -13,19 +13,15 @@ import { DEFAULT_TEACHER_CONFIG, DEFAULT_STUDENT_SELECTION } from './utils/defau
 export default function App() {
   // Persistence via localStorage initializer
   const [teacherConfig, setTeacherConfig] = useState<TeacherConfig>(() => {
-    const saved = localStorage.getItem('neutrality_teacher_config_v3');
+    const saved = localStorage.getItem('neutrality_teacher_config_v5');
     return saved ? JSON.parse(saved) : DEFAULT_TEACHER_CONFIG;
   });
 
   const [studentSelection, setStudentSelection] = useState<StudentSelection>(() => {
-    const saved = localStorage.getItem('neutrality_student_selection_v3');
+    const saved = localStorage.getItem('neutrality_student_selection_v5');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Map old string format tone if found
-        if (parsed.tone === 'דוגרי / ללא מסננים') {
-          parsed.tone = 'גס';
-        }
         return {
           ...DEFAULT_STUDENT_SELECTION,
           ...parsed,
@@ -38,19 +34,16 @@ export default function App() {
   });
 
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isAdminAuthorized, setIsAdminAuthorized] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState(false);
   const [compiledPrompt, setCompiledPrompt] = useState<string>('');
   const promptOutputRef = useRef<HTMLDivElement>(null);
 
   // Write changes to localStorage on any state mutation
   useEffect(() => {
-    localStorage.setItem('neutrality_teacher_config_v3', JSON.stringify(teacherConfig));
+    localStorage.setItem('neutrality_teacher_config_v5', JSON.stringify(teacherConfig));
   }, [teacherConfig]);
 
   useEffect(() => {
-    localStorage.setItem('neutrality_student_selection_v3', JSON.stringify(studentSelection));
+    localStorage.setItem('neutrality_student_selection_v5', JSON.stringify(studentSelection));
   }, [studentSelection]);
 
   // Parse dynamics whenever teacher configuration texts change
@@ -58,12 +51,12 @@ export default function App() {
 
   // Sync default dynamic situation if the current dynamic choice is removed in teacher config and it's not "other/custom" (אחר)
   useEffect(() => {
-    if (studentSelection.dynamicId !== 'אחר' && dynamicsList.length > 0) {
+    if (studentSelection.dynamicId && studentSelection.dynamicId !== 'אחר' && dynamicsList.length > 0) {
       const exists = dynamicsList.some((d) => d.name === studentSelection.dynamicId);
       if (!exists) {
         setStudentSelection((prev) => ({
           ...prev,
-          dynamicId: dynamicsList[0].name,
+          dynamicId: undefined,
           customSituation: '',
         }));
       }
@@ -73,17 +66,11 @@ export default function App() {
   const handleResetAdmin = () => {
     if (window.confirm('האם אתה בטוח שברצונך לאפס את ההגדרות לברירת המחדל של הקורס?')) {
       setTeacherConfig(DEFAULT_TEACHER_CONFIG);
-      // Reset student dynamic selection to align with default dynamics
-      const defaults = parseDynamics(DEFAULT_TEACHER_CONFIG.dynamicsText);
-      setStudentSelection((prev) => ({
-        ...prev,
-        ...DEFAULT_STUDENT_SELECTION,
-        dynamicId: defaults[0].name,
-        customSituation: '',
-      }));
+      setStudentSelection(DEFAULT_STUDENT_SELECTION);
       setCompiledPrompt('');
     }
   };
+
 
   const handleGenerate = () => {
     const prompt = compilePrompt(studentSelection, teacherConfig);
@@ -145,84 +132,13 @@ export default function App() {
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               className="overflow-hidden"
             >
-              {!isAdminAuthorized ? (
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 mb-6 shadow-xs max-w-md mx-auto relative overflow-hidden my-2">
-                  <div className="absolute top-0 right-0 left-0 h-1 bg-indigo-600" />
-                  <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-1.5">
-                    <span>🔒 אזור מרצה מוגן</span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                    מדור זה מוגן בסיסמה ומיועד לסגל האקדמי לצורך עדכון קריטריונים ודינמיקות. אנא הזן את סיסמת הגישה.
-                  </p>
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    if (passwordInput.trim() === 'smkb') {
-                      setIsAdminAuthorized(true);
-                      setPasswordError(false);
-                      setPasswordInput('');
-                    } else {
-                      setPasswordError(true);
-                      setPasswordInput('');
-                    }
-                  }} className="space-y-3">
-                    <div className="flex flex-col gap-1.5">
-                      <input
-                        type="password"
-                        autoFocus
-                        value={passwordInput}
-                        onChange={(e) => {
-                          setPasswordInput(e.target.value);
-                          if (passwordError) setPasswordError(false);
-                        }}
-                        placeholder="הזן סיסמה..."
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-center font-mono placeholder:font-sans"
-                      />
-                      {passwordError && (
-                        <span className="text-[11px] text-rose-600 font-bold block text-center animate-pulse">
-                          ⚠️ סיסמת הגישה שגויה. נסו שנית.
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        type="submit"
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer shadow-xs"
-                      >
-                        אישור כניסה
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsAdminOpen(false);
-                          setPasswordError(false);
-                          setPasswordInput('');
-                        }}
-                        className="px-4 py-2.5 text-slate-500 hover:bg-slate-100 rounded-xl text-xs transition border border-slate-200 cursor-pointer"
-                      >
-                        ביטול
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              ) : (
-                <div className="relative">
-                  {/* Lock action inside Admin Open State for UX */}
-                  <div className="absolute top-3 left-4 z-30">
-                    <button
-                      onClick={() => setIsAdminAuthorized(false)}
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md text-[10px] font-bold transition flex items-center gap-1 cursor-pointer border border-slate-200"
-                      title="נעילה מחדש"
-                    >
-                      <span>🔒 לנעילת האזור</span>
-                    </button>
-                  </div>
-                  <AdminPanel
-                    config={teacherConfig}
-                    onChange={setTeacherConfig}
-                    onReset={handleResetAdmin}
-                  />
-                </div>
-              )}
+              <div className="relative mb-6">
+                <AdminPanel
+                  config={teacherConfig}
+                  onChange={setTeacherConfig}
+                  onReset={handleResetAdmin}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
