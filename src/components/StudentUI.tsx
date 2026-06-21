@@ -186,13 +186,21 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
 
   // Form Validation & Checklist Requirements
   const isTextRefinementMode = selection.dynamicId === TEXT_REFINEMENT_OPTION.name;
+  const isAbsolute = selection.simulationType === 'absolute';
 
   const missingFields: string[] = [];
   if (!selection.stanceText?.trim()) missingFields.push('עמדה וטיעון עצמי');
   if (!selection.counterText?.trim()) missingFields.push('עמדה נגדית / הקול שאינו שלנו');
-  if (!selection.reflectionText?.trim()) missingFields.push('רפלקציה וחיבור מעשי לכיתה');
+  if (!selection.reflectionText?.trim()) {
+    missingFields.push(isAbsolute ? 'רפלקציה וחיבור מעשי לחיים / לעולם' : 'רפלקציה וחיבור מעשי לכיתה');
+  }
   
-  if (selection.participantsCount === undefined) missingFields.push('כמות משתתפים');
+  if (selection.simulationType === undefined) missingFields.push('סוג הסימולציה');
+  if (selection.participantsCount === undefined) {
+    missingFields.push('כמות משתתפים');
+  } else if (!selection.genderSelected) {
+    missingFields.push('הרכב מגדר הדמויות / משתתפים');
+  }
   if (selection.workMode === undefined) missingFields.push('דרכי עבודה (עובדים לבד / יחד)');
   if (selection.structureType === undefined) missingFields.push('משך ומבנה הפעילות');
   if (selection.tone === undefined) missingFields.push('טון השיחה המבוקש');
@@ -203,7 +211,9 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
   }
   
   if (!isTextRefinementMode) {
-    if (!selection.customSituation?.trim()) missingFields.push('תיאור סיטואציה פדגוגית');
+    if (!selection.customSituation?.trim()) {
+      missingFields.push(isAbsolute ? 'תיאור סיטואציה כללית' : 'תיאור סיטואציה פדגוגית');
+    }
   }
 
   const isFormValid = missingFields.length === 0;
@@ -221,6 +231,46 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
             <h3 className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">הגדרות הסימולציה</h3>
             <p className="text-[11px] text-slate-400 leading-relaxed">הגדירו את כמות המשתתפים, דרכי עבודה ומשך הפעילות לשאלון</p>
           </div>
+
+          {/* 0. סוג הסימולציה */}
+          <section className="flex flex-col gap-2">
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
+              סוג הסימולציה (טווח הקשר)
+            </span>
+            <div className="flex flex-col gap-2">
+              {[
+                { type: 'pedagogical', title: 'סימולציה', desc: 'התאמה מלאה לעולם החינוך, מורים וכיתות לימוד' },
+                { type: 'absolute', title: 'סימולציה מוחלטת', desc: 'דימוי עקרונות הסטודנט בעולם הכללי (ללא הקשרי בית ספר והוראה)' }
+              ].map((item) => (
+                <label
+                  key={item.type}
+                  className={`flex flex-col gap-1 p-3 border rounded-xl cursor-pointer select-none transition-all ${
+                    selection.simulationType === item.type
+                      ? 'border-indigo-600 bg-indigo-50/35 ring-1 ring-indigo-500/10'
+                      : 'border-slate-200 bg-white hover:bg-slate-50'
+                  }`}
+                  onClick={() => {
+                    onChange({
+                      ...selection,
+                      simulationType: item.type as any,
+                    });
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="simulationType"
+                      className="accent-indigo-600 cursor-pointer w-4 h-4"
+                      checked={selection.simulationType === item.type}
+                      onChange={() => {}} // handled by parent click
+                    />
+                    <span className="text-xs font-bold text-slate-800">{item.title}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 pr-6 leading-normal">{item.desc}</span>
+                </label>
+              ))}
+            </div>
+          </section>
 
           {/* 1. Participant Count Block */}
           <section className="flex flex-col gap-2">
@@ -246,6 +296,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
                       participantsCount: item.count as 1 | 2 | 3,
                       dynamicId: undefined, // empty structure to choose explicitly
                       customSituation: '', // reset situation description for student to match
+                      genderSelected: undefined, // reset gender combination choice on count change
                     });
                   }}
                 >
@@ -263,6 +314,57 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
                 </label>
               ))}
             </div>
+
+            {selection.participantsCount !== undefined && (
+              <div className="mt-2 bg-slate-50 border border-slate-200/85 rounded-xl p-3 flex flex-col gap-1.5 animate-fadeIn">
+                <label htmlFor="gender-combination-select" className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <span>הרכב מגדר הדמויות (בשביל פנייה נכונה בעברית):</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </span>
+                  <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono">חובה</span>
+                </label>
+                <select
+                  id="gender-combination-select"
+                  className="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-lg p-2 text-xs text-slate-800 outline-none transition cursor-pointer"
+                  value={selection.genderSelected || ''}
+                  onChange={(e) => {
+                    onChange({
+                      ...selection,
+                      genderSelected: e.target.value,
+                    });
+                  }}
+                >
+                  <option value="">-- בחרו הרכב מגדרים מבוקש --</option>
+                  {selection.participantsCount === 1 && (
+                    <>
+                      <option value="הוא (זכר)">הוא (זכר)</option>
+                      <option value="היא (נקבה)">היא (נקבה)</option>
+                      <option value="הם (אחר/מגוון)">הם (אחר/מגוון)</option>
+                    </>
+                  )}
+                  {selection.participantsCount === 2 && (
+                    <>
+                      <option value="זכר + זכר">זכר + זכר (שתי דמויות במין זכר)</option>
+                      <option value="זכר + נקבה">זכר + נקבה (דמות אחת זכר ודמות אחת נקבה)</option>
+                      <option value="נקבה + נקבה">נקבה + נקבה (שתי דמויות במין נקבה)</option>
+                    </>
+                  )}
+                  {selection.participantsCount === 3 && (
+                    <>
+                      <option value="זכר + זכר + זכר">זכר + זכר + זכר (שלוש דמויות במין זכר)</option>
+                      <option value="זכר + זכר + נקבה">זכר + זכר + נקבה (שתי דמויות זכר, ודמות אחת נקבה)</option>
+                      <option value="זכר + נקבה + נקבה">זכר + נקבה + נקבה (דמות אחת זכר, ושתי דמויות נקבה)</option>
+                      <option value="נקבה + נקבה + נקבה">נקבה + נקבה + נקבה (שלוש דמויות במין נקבה)</option>
+                      <option value="מעורב (שילוב חופשי)">מעורב (שילוב חופשי)</option>
+                    </>
+                  )}
+                </select>
+                <p className="text-[9px] text-slate-500 leading-normal">
+                  המחולל יתאים את הפועל, התארים, והפנייה בדיאלוג בסימולציה למגדרים שבחרתם כאן.
+                </p>
+              </div>
+            )}
           </section>
 
           {/* 2. Work Method (עובדים בנפרד / ביחד) */}
@@ -464,7 +566,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
             <div className="flex flex-col gap-2 text-right">
               <label htmlFor="student-reflection-text" className="text-xs font-bold text-slate-700 flex items-center justify-between">
                 <span className="flex items-center gap-1 text-slate-700">
-                  <span>רפלקציה וחיבור מעשי לכיתה (מן העיקרון אל המעשה)</span>
+                  <span>{selection.simulationType === 'absolute' ? 'רפלקציה וחיבור מעשי לחיים / לעולם (מן העיקרון אל המעשה)' : 'רפלקציה וחיבור מעשי לכיתה (מן העיקרון אל המעשה)'}</span>
                   <span className="text-rose-500 font-bold">*</span>
                 </span>
                 <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-mono">
@@ -474,7 +576,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
               <textarea
                 id="student-reflection-text"
                 className="w-full min-h-[85px] max-h-[140px] bg-white border border-slate-200 focus:border-indigo-500 rounded-xl p-3 text-sm leading-relaxed resize-y focus:ring-2 focus:ring-indigo-500/10 outline-none shadow-xs transition placeholder:text-slate-400"
-                placeholder="רפלקציה ומעשה: סכמו מהי המשמעות המעשית בפועל במפגש עם התלמידים וכיצד תתמודדו או תפעלו..."
+                placeholder={selection.simulationType === 'absolute' ? "רפלקציה ומעשה: סכמו בקצרה כיצד ייושמו עקרונות אלו בחיי היומיום, בחברה, או מול המעורבים בסיטואציה הכללית..." : "רפלקציה ומעשה: סכמו מהי המשמעות המעשית בפועל במפגש עם התלמידים וכיצד תתמודדו או תפעלו..."}
                 value={selection.reflectionText || ''}
                 onChange={(e) => onChange({ ...selection, reflectionText: e.target.value })}
                 required
@@ -562,19 +664,21 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
                       <p className="text-slate-200 font-normal mt-1">{originalExampleText}</p>
                     </div>
                   </div>
-                  <span>תיאור הסיטואציה הספציפית לסימולציה:</span>
+                  <span>{selection.simulationType === 'absolute' ? 'תיאור הסיטואציה הכללית לסימולציה:' : 'תיאור הסיטואציה הספציפית לסימולציה:'}</span>
                 </div>
                 <span className="text-[10px] text-indigo-600 font-bold px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100">שדה חובה</span>
               </label>
 
               {/* Expanded legible situation instructions */}
               <p className="text-xs text-slate-600 bg-slate-50 p-4 rounded-xl border border-indigo-100/80 leading-relaxed mb-1 font-medium">
-                <span className="font-bold text-indigo-700 text-sm block mb-1.5">כיצד לכתוב תיאור סיטואציה פדגוגית לסימולציה?</span>
+                <span className="font-bold text-indigo-700 text-sm block mb-1.5">
+                  {selection.simulationType === 'absolute' ? 'כיצד לכתוב תיאור סיטואציה כללית לסימולציה מוחלטת?' : 'כיצד לכתוב תיאור סיטואציה פדגוגית לסימולציה?'}
+                </span>
                 הקפידו לכלול את ארבעת רכיבי המפתח הבאים: 
                 <br />
-                <strong className="text-indigo-900 font-bold"> מקום והקשר</strong> (איפה מתרחש הדיאלוג) • 
+                <strong className="text-indigo-900 font-bold"> מקום והקשר</strong> (איפה מתרחש הדיאלוג - למשל זירת עיתונות, ארוחת שישי, ישיבת עירייה) • 
                 <strong className="text-indigo-900 font-bold">  תיאור האירוע</strong> (מה קרה שחולל את הדיון) • 
-                <strong className="text-indigo-900 font-bold">  דמויות משתתפות</strong> (מי בחדר ומה הזיקה שלהם) • 
+                <strong className="text-indigo-900 font-bold">  דמויות משתתפות</strong> (מי בשיחה ומה הזיקה שלהם) • 
                 <strong className="text-indigo-950 font-bold">  קונפליקט וניטרליות</strong> (איזו דילמה דוחפת את הצדדים להפעיל לחץ ומי שואף להישאר ניטרלי).
               </p>
 
@@ -586,7 +690,7 @@ export default function StudentUI({ selection, dynamicsList, onChange, onSubmit,
                     ? 'border-amber-300 focus:border-amber-500 bg-amber-50/5 text-amber-900'
                     : 'border-slate-200 focus:border-indigo-500 text-slate-800'
                 }`}
-                placeholder="רשמו כאן את מקום האירוע, המשתתפים, הקונפליקט, והדילמה של הניטרליות..."
+                placeholder={selection.simulationType === 'absolute' ? "רשמו כאן את מקום האירוע הכללי והבלתי תלוי בהוראה, המשתתפים, הקונפליקט המקצועי/משפחתי ודילמת הניטרליות..." : "רשמו כאן את מקום האירוע, המשתתפים, הקונפליקט, והדילמה של הניטרליות..."}
                 value={selection.customSituation || ''}
                 onChange={(e) => onChange({ ...selection, customSituation: e.target.value })}
               />

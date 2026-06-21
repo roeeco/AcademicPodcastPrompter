@@ -6,6 +6,10 @@
   --font-mono: "Fira Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+html {
+  font-size: 17px;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #f8fafc;

@@ -4,12 +4,12 @@ export interface EducationalDynamic {
 }
 
 export interface TeacherConfig {
-  criteria: string;
   dynamicsText: string; // The raw line-separated text editable by the mentor
   enableTextAnalyzer?: boolean; // Toggle for student draft evaluation
 }
 
 export type ConversationTone = 'ידידותי' | 'עצבני' | 'רשמי' | 'אנליטי' | 'גס';
+export type SimulationType = 'pedagogical' | 'absolute';
 
 export interface StudentSelection {
   stanceText: string;
@@ -24,6 +24,8 @@ export interface StudentSelection {
   tone?: ConversationTone; // unselected initially
   customDynamicName?: string;
   workMode?: 'individual' | 'together'; // unselected initially (עובדים בנפרד / ביחד)
+  simulationType?: SimulationType; // 'pedagogical' (סימולציה) or 'absolute' (סימולציה מוחלטת)
+  genderSelected?: string; // e.g. 'זכר + נקבה' etc.
 }
 
 

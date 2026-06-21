@@ -13,24 +13,12 @@ import { DEFAULT_TEACHER_CONFIG, DEFAULT_STUDENT_SELECTION } from './utils/defau
 export default function App() {
   // Persistence via localStorage initializer
   const [teacherConfig, setTeacherConfig] = useState<TeacherConfig>(() => {
-    const saved = localStorage.getItem('neutrality_teacher_config_v5');
+    const saved = localStorage.getItem('neutrality_teacher_config_v7');
     return saved ? JSON.parse(saved) : DEFAULT_TEACHER_CONFIG;
   });
 
   const [studentSelection, setStudentSelection] = useState<StudentSelection>(() => {
-    const saved = localStorage.getItem('neutrality_student_selection_v5');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return {
-          ...DEFAULT_STUDENT_SELECTION,
-          ...parsed,
-        };
-      } catch (err) {
-        return DEFAULT_STUDENT_SELECTION;
-      }
-    }
-    return DEFAULT_STUDENT_SELECTION;
+    return { ...DEFAULT_STUDENT_SELECTION };
   });
 
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -57,7 +45,7 @@ export default function App() {
 
   // Write changes to localStorage & sync with Express server database on any configuration update
   useEffect(() => {
-    localStorage.setItem('neutrality_teacher_config_v5', JSON.stringify(teacherConfig));
+    localStorage.setItem('neutrality_teacher_config_v7', JSON.stringify(teacherConfig));
     
     // Server-side persistent storage synchronization
     fetch('/api/teacher-config', {
@@ -71,9 +59,6 @@ export default function App() {
     });
   }, [teacherConfig]);
 
-  useEffect(() => {
-    localStorage.setItem('neutrality_student_selection_v5', JSON.stringify(studentSelection));
-  }, [studentSelection]);
 
   // Parse dynamics whenever teacher configuration texts change
   const dynamicsList = parseDynamics(teacherConfig.dynamicsText);
@@ -109,15 +94,6 @@ export default function App() {
     setTimeout(() => {
       promptOutputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 150);
-  };
-
-  // Extract brief list of criteria for the bottom status bar
-  const getCriteriaPreview = () => {
-    return teacherConfig.criteria
-      .split('\n')
-      .map((line) => line.replace(/^\d+\.\s*/, '').trim())
-      .filter(Boolean)
-      .join(', ');
   };
 
   return (
@@ -211,12 +187,6 @@ export default function App() {
           <span>סיטואציה פעילה ברקע:</span>
           <span className="text-slate-200 font-semibold">
             {studentSelection.dynamicId === 'אחר' ? studentSelection.customDynamicName : studentSelection.dynamicId}
-          </span>
-        </div>
-        <div className="hidden md:flex items-center gap-2 border-r border-slate-700 pr-8 overflow-hidden max-w-xl">
-          <span className="font-semibold text-slate-300 shrink-0">קריטריונים פעילים:</span>
-          <span className="italic opacity-85 truncate" title={getCriteriaPreview()}>
-            {getCriteriaPreview()}
           </span>
         </div>
         <div className="md:mr-auto text-slate-500 font-mono tracking-wider text-[10px] uppercase">
